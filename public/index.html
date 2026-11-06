@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DayLog – Daily Task &amp; Study Tracker</title>
+<style>
+/* ========== CSS variables & reset ========== */
+:root {
+  --bg: #f6f5f1;
+  --card: #ffffff;
+  --card-border: #e2e2e6;
+  --text: #1a1a1e;
+  --text2: #555560;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-light: #eef2ff;
+  --status-todo: #8a8a93;
+  --status-prog: #d97706;
+  --status-done: #16a34a;
+  --status-block: #dc2626;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --radius: 13px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+@media(prefers-color-scheme:dark){
+  :root {
+    --bg: #121316;
+    --card: #1b1c21;
+    --card-border: #2a2b31;
+    --text: #e4e4e8;
+    --text2: #9a9aa4;
+    --accent-light: #1e1e30;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{
+  font-family:var(--font);color:var(--text);background:var(--bg);
+  min-height:100vh;padding-bottom:var(--safe-b);
+  padding-left:var(--safe-l);padding-right:var(--safe-r);
+}
+input,select,textarea,button{font:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer}
+
+/* ========== Layout ========== */
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+
+/* ========== Header ========== */
+header{
+  background:var(--card);border-bottom:1px solid var(--card-border);
+  position:sticky;top:0;z-index:100;
+}
+.header-inner{
+  display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap;
+}
+.logo{font-size:1.35rem;font-weight:800;white-space:nowrap}
+.logo .day{color:var(--text)}
+.logo .log{color:var(--accent)}
+.search-box{
+  margin-left:auto;position:relative;min-width:180px;flex:1;max-width:320px;
+}
+.search-box input{
+  width:100%;padding:8px 12px 8px 34px;border:1px solid var(--card-border);
+  border-radius:8px;background:var(--bg);outline:none;font-size:.9rem;
+}
+.search-box input:focus{border-color:var(--accent)}
+.search-box .icon-search{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;opacity:.45;pointer-events:none;
+}
+.search-results{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
+  max-height:400px;overflow-y:auto;display:none;z-index:200;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.search-results.open{display:block}
+.sr-msg{padding:14px;text-align:center;color:var(--text2);font-size:.9rem}
+.sr-item{
+  padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--card-border);
+  font-size:.88rem;
+}
+.sr-item:last-child{border:none}
+.sr-item:hover{background:var(--accent-light)}
+.sr-item .sr-date{font-size:.78rem;color:var(--text2);margin-bottom:2px}
+.sr-item .sr-type{
+  display:inline-block;font-size:.7rem;font-weight:600;text-transform:uppercase;
+  padding:1px 6px;border-radius:4px;background:var(--accent-light);color:var(--accent);
+  margin-right:6px;
+}
+mark{background:#fde68a;color:#000;border-radius:2px;padding:0 1px}
+@media(prefers-color-scheme:dark){mark{background:#854d0e;color:#fde68a}}
+
+/* ========== Date bar ========== */
+.date-bar{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 0;flex-wrap:wrap;
+}
+.date-bar button{
+  padding:6px 12px;border:1px solid var(--card-border);border-radius:8px;
+  background:var(--card);font-size:.85rem;
+}
+.date-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.date-bar input[type=date]{
+  padding:6px 10px;border:1px solid var(--card-border);border-radius:8px;
+  background:var(--card);font-size:.95rem;font-weight:600;
+}
+
+/* ========== Tabs ========== */
+.tabs{
+  display:flex;gap:6px;padding:0 0 12px;
+}
+.tab-btn{
+  padding:7px 18px;border:none;border-radius:20px;
+  background:var(--card);font-size:.88rem;font-weight:600;
+  border:1px solid var(--card-border);
+}
+.tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ========== Cards ========== */
+.card{
+  background:var(--card);border:1px solid var(--card-border);
+  border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;
+}
+
+/* ========== Stats ========== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat-card{text-align:center;padding:14px 8px}
+.stat-card .val{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.stat-card .lbl{font-size:.78rem;color:var(--text2);margin-top:2px}
+.stat-card .bar-wrap{
+  height:6px;background:var(--bg);border-radius:3px;margin-top:8px;overflow:hidden;
+}
+.stat-card .bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+
+/* ========== Task slot ========== */
+.slot{
+  display:grid;grid-template-columns:92px 1fr auto;gap:0 14px;
+  padding:14px 16px;border-left:4px solid var(--status-todo);position:relative;
+}
+.slot.s-prog{border-left-color:var(--status-prog)}
+.slot.s-done{border-left-color:var(--status-done)}
+.slot.s-block{border-left-color:var(--status-block)}
+.slot-time{
+  font-size:.82rem;font-weight:600;color:var(--text2);padding-top:2px;
+}
+.slot-time .now-tag{
+  display:inline-block;font-size:.65rem;font-weight:700;color:#fff;
+  background:var(--accent);border-radius:4px;padding:1px 5px;margin-left:4px;
+  vertical-align:middle;
+}
+.slot-body{display:flex;flex-direction:column;gap:8px;min-width:0}
+.slot-body input[type=text],.slot-body textarea,.slot-body select{
+  width:100%;padding:7px 10px;border:1px solid var(--card-border);
+  border-radius:8px;background:var(--bg);outline:none;font-size:.88rem;
+}
+.slot-body textarea{resize:vertical;min-height:52px}
+.slot-body input:focus,.slot-body textarea:focus,.slot-body select:focus{border-color:var(--accent)}
+.slot-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.slot-row select{max-width:150px}
+.slot-row .progress-wrap{flex:1;display:flex;align-items:center;gap:6px;min-width:120px}
+.slot-row .progress-wrap input[type=range]{flex:1;accent-color:var(--accent)}
+.slot-row .progress-wrap span{font-size:.82rem;min-width:34px;text-align:right;color:var(--text2)}
+.slot-actions{display:flex;align-items:flex-start;padding-top:2px}
+.btn-clear{
+  padding:5px 10px;border:1px solid var(--card-border);border-radius:8px;
+  background:var(--card);font-size:.78rem;color:var(--text2);
+}
+.btn-clear:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ========== Study tab ========== */
+.study-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.study-form .full{grid-column:1/-1}
+.study-form input,.study-form textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--card-border);
+  border-radius:8px;background:var(--bg);outline:none;font-size:.88rem;
+}
+.study-form textarea{resize:vertical;min-height:72px}
+.study-form input:focus,.study-form textarea:focus{border-color:var(--accent)}
+.study-actions{
+  grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;
+}
+.btn-primary{
+  padding:8px 20px;border:none;border-radius:8px;
+  background:var(--accent);color:#fff;font-weight:600;font-size:.88rem;
+}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{
+  padding:8px 16px;border:1px solid var(--card-border);border-radius:8px;
+  background:var(--card);font-size:.88rem;
+}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{
+  padding:5px 12px;border:1px solid var(--card-border);border-radius:8px;
+  background:var(--card);font-size:.82rem;color:var(--danger);
+}
+.btn-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+
+.study-list{margin-top:14px}
+.study-entry{
+  padding:12px 14px;display:flex;gap:12px;align-items:flex-start;
+  border-bottom:1px solid var(--card-border);
+}
+.study-entry:last-child{border:none}
+.study-info{flex:1;min-width:0}
+.study-info h4{font-size:.95rem;margin-bottom:2px}
+.study-info .topic-line{font-size:.84rem;color:var(--text2)}
+.study-info .notes-preview{
+  font-size:.82rem;color:var(--text2);margin-top:4px;
+  white-space:pre-wrap;word-break:break-word;
+}
+.study-info .mins-badge{
+  display:inline-block;font-size:.72rem;font-weight:600;
+  padding:2px 7px;border-radius:4px;background:var(--accent-light);color:var(--accent);
+  margin-left:6px;
+}
+.study-btns{display:flex;gap:6px;flex-shrink:0}
+
+/* ========== Toast ========== */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1a1a1e;color:#fff;padding:10px 20px;border-radius:10px;
+  font-size:.88rem;z-index:9999;opacity:0;pointer-events:none;
+  transition:opacity .25s;max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;pointer-events:auto}
+
+/* ========== Loading ========== */
+.loading-overlay{
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;color:var(--text2);font-size:.95rem;
+}
+
+/* ========== Responsive ========== */
+@media(max-width:560px){
+  .stats{grid-template-columns:1fr 1fr}
+  .slot{grid-template-columns:1fr;gap:8px}
+  .slot-actions{justify-content:flex-end}
+  .study-form{grid-template-columns:1fr}
+  .header-inner{gap:8px}
+  .search-box{min-width:0;max-width:none;flex-basis:100%;order:3}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="wrap header-inner">
+    <div class="logo"><span class="day">Day</span><span class="log">Log</span></div>
+    <div class="search-box">
+      <svg class="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search all dates…" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+</header>
+
+<!-- Date bar -->
+<div class="wrap">
+  <div class="date-bar">
+    <button id="prevDay">← Prev</button>
+    <input type="date" id="datePicker">
+    <button id="nextDay">Next →</button>
+    <button id="todayBtn">Today</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="plan">Plan</button>
+    <button class="tab-btn" data-tab="study">Study</button>
+  </div>
+</div>
+
+<!-- Plan tab -->
+<div class="wrap" id="panelPlan">
+  <!-- Stats -->
+  <div class="stats" id="statsBar">
+    <div class="card stat-card"><div class="val" id="statPlanned">0</div><div class="lbl">Planned</div></div>
+    <div class="card stat-card"><div class="val" id="statDone">0</div><div class="lbl">Done</div></div>
+    <div class="card stat-card"><div class="val" id="statProg">0</div><div class="lbl">In Progress</div></div>
+    <div class="card stat-card">
+      <div class="val" id="statAvg">0%</div><div class="lbl">Avg Progress</div>
+      <div class="bar-wrap"><div class="bar-fill" id="statBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <!-- Slots container -->
+  <div id="slotsContainer"></div>
+</div>
+
+<!-- Study tab -->
+<div class="wrap" id="panelStudy" style="display:none">
+  <div class="card">
+    <div class="study-form" id="studyForm">
+      <input type="text" id="sfSubject" placeholder="Subject" maxlength="100">
+      <input type="text" id="sfTopic" placeholder="Topic" maxlength="200">
+      <textarea class="full" id="sfNotes" placeholder="Key notes…" maxlength="10000"></textarea>
+      <input type="number" id="sfMins" placeholder="Minutes studied" min="0">
+      <div class="study-actions">
+        <button class="btn-secondary" id="sfCancel" style="display:none">Cancel</button>
+        <button class="btn-primary" id="sfSubmit">Add entry</button>
+      </div>
+    </div>
+  </div>
+  <div id="studyList" class="study-list"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ========== Helpers ========== */
+function esc(s){
+  if(typeof s!=='string') return '';
+  const d=document.createElement('div');d.textContent=s;return d.innerHTML;
+}
+function formatDate(d){return d.toISOString().slice(0,10)}
+function today(){return formatDate(new Date())}
+
+/* ========== State ========== */
+let currentDate = today();
+let activeTab = 'plan';
+let appKey = '';
+let taskData = {};  // slot -> data
+let studyData = []; // array
+let editingStudyId = null;
+
+const SLOTS = [];
+for(let h=6;h<21;){
+  const sh=String(h).padStart(2,'0');
+  const sm='00';
+  const startLabel=sh+':'+sm;
+  let em=h*60+90;
+  const eh=Math.floor(em/60), emin=em%60;
+  const endLabel=String(eh).padStart(2,'0')+':'+String(emin).padStart(2,'0');
+  SLOTS.push({slot:startLabel,label:startLabel+' – '+endLabel,startMin:h*60});
+  h=eh; // next slot starts at end hour
+}
+
+const STATUS_MAP = {
+  todo:{label:'Not started',cls:''},
+  prog:{label:'In progress',cls:'s-prog'},
+  done:{label:'Done',cls:'s-done'},
+  block:{label:'Blocked',cls:'s-block'},
+};
+
+/* ========== DOM refs ========== */
+const $=s=>document.querySelector(s);
+const datePicker = $('#datePicker');
+const slotsContainer = $('#slotsContainer');
+const studyList = $('#studyList');
+const searchInput = $('#searchInput');
+const searchResults = $('#searchResults');
+const toast = $('#toast');
+
+/* ========== Toast ========== */
+let toastTimer;
+function showToast(msg, dur=3500){
+  toast.textContent=msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('show'), dur);
+}
+
+/* ========== LocalStorage key ========== */
+function loadKey(){
+  try{ appKey=localStorage.getItem('daylog_key')||''; }catch(e){}
+}
+function saveKey(k){
+  try{ localStorage.setItem('daylog_key',k); }catch(e){}
+  appKey=k;
+}
+loadKey();
+
+/* ========== Fetch wrapper with auth retry ========== */
+async function api(url, opts={}){
+  opts.headers = opts.headers||{};
+  if(appKey) opts.headers['x-app-key']=appKey;
+  if(opts.body && typeof opts.body==='object'){
+    opts.headers['Content-Type']='application/json';
+    opts.body=JSON.stringify(opts.body);
+  }
+  let res=await fetch(url,opts);
+  if(res.status===401){
+    const k=prompt('Enter your DayLog access key:');
+    if(k){
+      saveKey(k);
+      opts.headers['x-app-key']=k;
+      if(opts.body && typeof opts.body==='string') { /* body already stringified */ }
+      res=await fetch(url,opts);
+    }
+  }
+  if(!res.ok){
+    const j=await res.json().catch(()=>({error:'Unknown error'}));
+    throw new Error(j.error||'Request failed');
+  }
+  return res.json();
+}
+
+/* ========== Date navigation ========== */
+function setDate(d){
+  currentDate=d;
+  datePicker.value=d;
+  loadData();
+}
+
+datePicker.addEventListener('change',()=>setDate(datePicker.value));
+$('#prevDay').addEventListener('click',()=>{
+  const d=new Date(currentDate+'T12:00:00');d.setDate(d.getDate()-1);setDate(formatDate(d));
+});
+$('#nextDay').addEventListener('click',()=>{
+  const d=new Date(currentDate+'T12:00:00');d.setDate(d.getDate()+1);setDate(formatDate(d));
+});
+$('#todayBtn').addEventListener('click',()=>setDate(today()));
+
+/* ========== Tabs ========== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab=btn.dataset.tab;
+    $('#panelPlan').style.display = activeTab==='plan'?'':'none';
+    $('#panelStudy').style.display = activeTab==='study'?'':'none';
+  });
+});
+
+/* ========== Load data ========== */
+async function loadData(){
+  slotsContainer.innerHTML='<div class="loading-overlay">Loading…</div>';
+  studyList.innerHTML='<div class="loading-overlay">Loading…</div>';
+  try{
+    const [tasks, study] = await Promise.all([
+      api('/api/tasks?date='+currentDate),
+      api('/api/study?date='+currentDate),
+    ]);
+    taskData={};
+    tasks.forEach(t=>{ taskData[t.slot]=t; });
+    studyData=study;
+    renderSlots();
+    renderStudy();
+    updateStats();
+  }catch(e){
+    showToast('Load failed: '+e.message);
+    slotsContainer.innerHTML='';
+    studyList.innerHTML='';
+  }
+}
+
+/* ========== Current slot detection ========== */
+function currentSlotKey(){
+  if(currentDate!==today()) return null;
+  const now=new Date();
+  const mins=now.getHours()*60+now.getMinutes();
+  for(let i=SLOTS.length-1;i>=0;i--){
+    if(mins>=SLOTS[i].startMin) return SLOTS[i].slot;
+  }
+  return null;
+}
+
+/* ========== Render slots ========== */
+function renderSlots(){
+  const nowSlot=currentSlotKey();
+  slotsContainer.innerHTML='';
+  SLOTS.forEach(s=>{
+    const d=taskData[s.slot]||{};
+    const status=d.status||'todo';
+    const cls=STATUS_MAP[status].cls;
+    const isNow=s.slot===nowSlot;
+    const progress=d.progress||0;
+
+    const div=document.createElement('div');
+    div.className='card slot'+(cls?' '+cls:'');
+    div.innerHTML=`
+      <div class="slot-time">${esc(s.label)}${isNow?'<span class="now-tag">NOW</span>':''}</div>
+      <div class="slot-body">
+        <input type="text" placeholder="What's planned?" value="${esc(d.title||'')}" data-field="title" maxlength="200">
+        <div class="slot-row">
+          <select data-field="status">
+            ${Object.entries(STATUS_MAP).map(([k,v])=>`<option value="${k}"${k===status?' selected':''}>${esc(v.label)}</option>`).join('')}
+          </select>
+          <div class="progress-wrap">
+            <input type="range" min="0" max="100" step="5" value="${progress}" data-field="progress">
+            <span>${progress}%</span>
+          </div>
+        </div>
+        <textarea placeholder="What did you actually do?" data-field="report" maxlength="4000">${esc(d.report||'')}</textarea>
+      </div>
+      <div class="slot-actions">
+        <button class="btn-clear">Clear</button>
+      </div>
+    `;
+    // Auto-save debounce
+    let timer;
+    function scheduleSave(){
+      clearTimeout(timer);
+      timer=setTimeout(()=>saveSlot(s.slot, div), 500);
+    }
+    div.querySelector('[data-field=title]').addEventListener('input', scheduleSave);
+    div.querySelector('[data-field=report]').addEventListener('input', scheduleSave);
+    div.querySelector('[data-field=progress]').addEventListener('input', e=>{
+      e.target.nextElementSibling.textContent=e.target.value+'%';
+      scheduleSave();
+    });
+    div.querySelector('[data-field=status]').addEventListener('change', e=>{
+      if(e.target.value==='done'){
+        const slider=div.querySelector('[data-field=progress]');
+        slider.value=100;
+        slider.nextElementSibling.textContent='100%';
+      }
+      // Update border colour immediately
+      div.className='card slot'+(STATUS_MAP[e.target.value].cls?' '+STATUS_MAP[e.target.value].cls:'');
+      scheduleSave();
+    });
+    div.querySelector('.btn-clear').addEventListener('click',()=>clearSlot(s.slot, div));
+
+    slotsContainer.appendChild(div);
+  });
+}
+
+async function saveSlot(slot, div){
+  const title=div.querySelector('[data-field=title]').value;
+  const status=div.querySelector('[data-field=status]').value;
+  const progress=parseInt(div.querySelector('[data-field=progress]').value,10);
+  const report=div.querySelector('[data-field=report]').value;
+
+  // Skip save if all fields are empty
+  if(!title.trim() && !report.trim() && status==='todo' && progress===0) return;
+
+  taskData[slot]={date:currentDate,slot,title,status,progress,report};
+  updateStats();
+
+  try{
+    await api('/api/tasks',{method:'POST',body:{date:currentDate,slot,title,status,progress,report}});
+  }catch(e){
+    showToast('Save failed: '+e.message);
+  }
+}
+
+async function clearSlot(slot, div){
+  div.querySelector('[data-field=title]').value='';
+  div.querySelector('[data-field=status]').value='todo';
+  const slider=div.querySelector('[data-field=progress]');
+  slider.value=0; slider.nextElementSibling.textContent='0%';
+  div.querySelector('[data-field=report]').value='';
+  div.className='card slot';
+
+  delete taskData[slot];
+  updateStats();
+
+  try{
+    await api('/api/tasks?date='+currentDate+'&slot='+encodeURIComponent(slot),{method:'DELETE'});
+  }catch(e){
+    showToast('Clear failed: '+e.message);
+  }
+}
+
+/* ========== Stats ========== */
+function updateStats(){
+  const entries=Object.values(taskData);
+  const planned=entries.length;
+  const done=entries.filter(e=>e.status==='done').length;
+  const prog=entries.filter(e=>e.status==='prog').length;
+  const avg=planned?Math.round(entries.reduce((s,e)=>s+(e.progress||0),0)/planned):0;
+
+  $('#statPlanned').textContent=planned;
+  $('#statDone').textContent=done;
+  $('#statProg').textContent=prog;
+  $('#statAvg').textContent=avg+'%';
+  $('#statBar').style.width=avg+'%';
+}
+
+/* ========== Study ========== */
+function renderStudy(){
+  if(!studyData.length){
+    studyList.innerHTML='<div class="card" style="text-align:center;color:var(--text2);padding:24px">No study entries for this date.</div>';
+    return;
+  }
+  studyList.innerHTML='';
+  studyData.forEach(e=>{
+    const div=document.createElement('div');
+    div.className='card study-entry';
+    div.innerHTML=`
+      <div class="study-info">
+        <h4>${esc(e.subject)}${e.mins?'<span class="mins-badge">'+esc(String(e.mins))+' min</span>':''}</h4>
+        <div class="topic-line">${esc(e.topic)}</div>
+        ${e.notes?'<div class="notes-preview">'+esc(e.notes)+'</div>':''}
+      </div>
+      <div class="study-btns">
+        <button class="btn-secondary btn-edit">Edit</button>
+        <button class="btn-danger btn-del">Delete</button>
+      </div>
+    `;
+    div.querySelector('.btn-edit').addEventListener('click',()=>startEditStudy(e));
+    div.querySelector('.btn-del').addEventListener('click',()=>deleteStudy(e._id));
+    studyList.appendChild(div);
+  });
+}
+
+// Form submit
+$('#sfSubmit').addEventListener('click', submitStudy);
+$('#sfCancel').addEventListener('click', cancelEditStudy);
+
+async function submitStudy(){
+  const subject=$('#sfSubject').value.trim();
+  const topic=$('#sfTopic').value.trim();
+  const notes=$('#sfNotes').value.trim();
+  const mins=parseInt($('#sfMins').value,10)||0;
+
+  if(!subject){showToast('Subject is required');return;}
+
+  try{
+    if(editingStudyId){
+      await api('/api/study?id='+editingStudyId,{method:'PUT',body:{subject,topic,notes,mins}});
+    }else{
+      await api('/api/study',{method:'POST',body:{date:currentDate,subject,topic,notes,mins}});
+    }
+    cancelEditStudy();
+    loadData();
+  }catch(e){
+    showToast('Save failed: '+e.message);
+  }
+}
+
+function startEditStudy(entry){
+  editingStudyId=entry._id;
+  $('#sfSubject').value=entry.subject||'';
+  $('#sfTopic').value=entry.topic||'';
+  $('#sfNotes').value=entry.notes||'';
+  $('#sfMins').value=entry.mins||'';
+  $('#sfSubmit').textContent='Update entry';
+  $('#sfCancel').style.display='';
+  $('#sfSubject').focus();
+}
+
+function cancelEditStudy(){
+  editingStudyId=null;
+  $('#sfSubject').value='';
+  $('#sfTopic').value='';
+  $('#sfNotes').value='';
+  $('#sfMins').value='';
+  $('#sfSubmit').textContent='Add entry';
+  $('#sfCancel').style.display='none';
+}
+
+async function deleteStudy(id){
+  if(!confirm('Delete this study entry?')) return;
+  try{
+    await api('/api/study?id='+id,{method:'DELETE'});
+    loadData();
+  }catch(e){
+    showToast('Delete failed: '+e.message);
+  }
+}
+
+/* ========== Search ========== */
+let searchTimer;
+searchInput.addEventListener('input',()=>{
+  clearTimeout(searchTimer);
+  const q=searchInput.value.trim();
+  if(!q){searchResults.classList.remove('open');return;}
+  searchResults.innerHTML='<div class="sr-msg">Searching…</div>';
+  searchResults.classList.add('open');
+  searchTimer=setTimeout(()=>runSearch(q),300);
+});
+searchInput.addEventListener('keydown',e=>{if(e.key==='Escape'){searchInput.value='';searchResults.classList.remove('open');}});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-box'))searchResults.classList.remove('open');});
+
+async function runSearch(q){
+  try{
+    const data=await api('/api/search?q='+encodeURIComponent(q));
+    const all=[];
+
+    // Escape for regex highlight
+    const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    function hl(str){return esc(str||'').replace(re,'<mark>$1</mark>');}
+
+    data.tasks.forEach(t=>{
+      all.push({
+        date:t.date,
+        tab:'plan',
+        type:'Task '+t.slot,
+        html: hl(t.title)+(t.report?' — '+hl(t.report):''),
+      });
+    });
+    data.study.forEach(s=>{
+      all.push({
+        date:s.date,
+        tab:'study',
+        type:'Study',
+        html: hl(s.subject)+' / '+hl(s.topic)+(s.notes?' — '+hl(s.notes):''),
+      });
+    });
+
+    if(!all.length){
+      searchResults.innerHTML='<div class="sr-msg">Nothing found</div>';
+      return;
+    }
+    searchResults.innerHTML='';
+    all.forEach(r=>{
+      const div=document.createElement('div');
+      div.className='sr-item';
+      div.innerHTML=`<div class="sr-date">${esc(r.date)}</div><span class="sr-type">${esc(r.type)}</span>${r.html}`;
+      div.addEventListener('click',()=>{
+        searchInput.value='';
+        searchResults.classList.remove('open');
+        // Switch tab
+        document.querySelectorAll('.tab-btn').forEach(b=>{
+          b.classList.toggle('active',b.dataset.tab===r.tab);
+        });
+        activeTab=r.tab;
+        $('#panelPlan').style.display=r.tab==='plan'?'':'none';
+        $('#panelStudy').style.display=r.tab==='study'?'':'none';
+        setDate(r.date);
+      });
+      searchResults.appendChild(div);
+    });
+  }catch(e){
+    searchResults.innerHTML='<div class="sr-msg">Search failed</div>';
+  }
+}
+
+/* ========== Init ========== */
+setDate(today());
+
+})();
+</script>
+</body>
+</html>

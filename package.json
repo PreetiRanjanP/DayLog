@@ -1,0 +1,16 @@
+{
+  "name": "daylog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily task and study tracker – Vercel serverless + MongoDB Atlas",
+  "scripts": {
+    "dev": "node dev.js",
+    "start": "node dev.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.11.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
