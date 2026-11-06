@@ -47,6 +47,6 @@ module.exports = async function handler(req, res) {
     return res.json({ tasks, study });
   } catch (err) {
     console.error("search error:", err);
-    return sendError(res, 500, "Internal server error");
+    return sendError(res, 500, err.message || "Internal server error");
   }
 };

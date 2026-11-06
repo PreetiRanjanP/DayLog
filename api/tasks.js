@@ -63,6 +63,6 @@ module.exports = async function handler(req, res) {
     }
   } catch (err) {
     console.error("tasks error:", err);
-    return sendError(res, 500, "Internal server error");
+    return sendError(res, 500, err.message || "Internal server error");
   }
 };
