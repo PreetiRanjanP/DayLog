@@ -335,15 +335,15 @@ let studyData = []; // array
 let editingStudyId = null;
 
 const SLOTS = [];
-for(let h=6;h<21;){
-  const sh=String(h).padStart(2,'0');
-  const sm='00';
-  const startLabel=sh+':'+sm;
-  let em=h*60+90;
-  const eh=Math.floor(em/60), emin=em%60;
-  const endLabel=String(eh).padStart(2,'0')+':'+String(emin).padStart(2,'0');
-  SLOTS.push({slot:startLabel,label:startLabel+' – '+endLabel,startMin:h*60});
-  h=eh; // next slot starts at end hour
+for (let startMin = 6 * 60; startMin < 21 * 60; startMin += 90) {
+  const endMin = startMin + 90;
+  const sh = String(Math.floor(startMin / 60)).padStart(2, '0');
+  const sm = String(startMin % 60).padStart(2, '0');
+  const eh = String(Math.floor(endMin / 60)).padStart(2, '0');
+  const em = String(endMin % 60).padStart(2, '0');
+  const slotKey = sh + ':' + sm;
+  const label = sh + ':' + sm + ' – ' + eh + ':' + em;
+  SLOTS.push({ slot: slotKey, label, startMin, endMin });
 }
 
 const STATUS_MAP = {
@@ -460,8 +460,8 @@ function currentSlotKey(){
   if(currentDate!==today()) return null;
   const now=new Date();
   const mins=now.getHours()*60+now.getMinutes();
-  for(let i=SLOTS.length-1;i>=0;i--){
-    if(mins>=SLOTS[i].startMin) return SLOTS[i].slot;
+  for(let i=0;i<SLOTS.length;i++){
+    if(mins>=SLOTS[i].startMin && mins<SLOTS[i].endMin) return SLOTS[i].slot;
   }
   return null;
 }

@@ -29,8 +29,8 @@ npm install
 cp .env.example .env
 # Edit .env and paste your MongoDB Atlas connection string
 
-# 3. Run the dev server
-npx vercel dev
+# 3. Run the dev server (no Vercel login needed)
+npm run dev
 # Open http://localhost:3000
 ```
 

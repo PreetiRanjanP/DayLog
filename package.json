@@ -4,6 +4,7 @@
   "private": true,
   "description": "Daily task and study tracker – Vercel serverless + MongoDB Atlas",
   "scripts": {
+    "build": "echo \"No build step required\"",
     "dev": "node dev.js",
     "start": "node dev.js"
   },
